@@ -1,9 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-
-const NWS_API_BASE = "https://api.weather.gov";
-const USER_AGENT = "weather-app/1.0";
+import { AlertFeature, AlertsResponse, ForecastPeriod, ForecastResponse, PointsResponse } from "./type.js";
+import { NWS_API_BASE, USER_AGENT } from "./constants.js";
 
 // Helper function for making NWS API requests
 async function makeNWSRequest<T>(url: string): Promise<T | null> {
@@ -24,15 +23,6 @@ async function makeNWSRequest<T>(url: string): Promise<T | null> {
   }
 }
 
-interface AlertFeature {
-  properties: {
-    event?: string;
-    areaDesc?: string;
-    severity?: string;
-    status?: string;
-    headline?: string;
-  };
-}
 
 // Format alert data
 function formatAlert(feature: AlertFeature): string {
@@ -47,30 +37,6 @@ function formatAlert(feature: AlertFeature): string {
   ].join("\n");
 }
 
-interface ForecastPeriod {
-  name?: string;
-  temperature?: number;
-  temperatureUnit?: string;
-  windSpeed?: string;
-  windDirection?: string;
-  shortForecast?: string;
-}
-
-interface AlertsResponse {
-  features: AlertFeature[];
-}
-
-interface PointsResponse {
-  properties: {
-    forecast?: string;
-  };
-}
-
-interface ForecastResponse {
-  properties: {
-    periods: ForecastPeriod[];
-  };
-}
 
 // Create server instance
 const server = new McpServer({

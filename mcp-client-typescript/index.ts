@@ -22,12 +22,15 @@ class MCPClient {
   private anthropic: Anthropic;
   private transport: StdioClientTransport | null = null;
   private tools: Tool[] = [];
+  
 
   constructor() {
+    console.log(9999, ANTHROPIC_API_KEY)
     // Initialize Anthropic client and MCP client
-    this.anthropic = new Anthropic({
-      apiKey: ANTHROPIC_API_KEY,
-    });
+    this.anthropic = new Anthropic();
+    // this.anthropic = new Anthropic({
+    //   apiKey: ANTHROPIC_API_KEY,
+    // });
     this.mcp = new Client({ name: "mcp-client-cli", version: "1.0.0" });
   }
 
@@ -44,11 +47,14 @@ class MCPClient {
       if (!isJs && !isPy) {
         throw new Error("Server script must be a .js or .py file");
       }
+      
       const command = isPy
         ? process.platform === "win32"
           ? "python"
           : "python3"
         : process.execPath;
+      //  process.execPath:
+      // /Users/yafei/.nvm/versions/node/v21.6.2/bin/node
 
       // Initialize transport and connect to server
       this.transport = new StdioClientTransport({
@@ -67,7 +73,7 @@ class MCPClient {
         };
       });
       console.log(
-        "Connected to server with tools:",
+        "11111111，Connected to server with tools:",
         this.tools.map(({ name }) => name),
       );
     } catch (e) {
@@ -86,10 +92,24 @@ class MCPClient {
     const messages: MessageParam[] = [
       {
         role: "user",
-        content: query,
+        content: [
+          {
+            type: "text",
+            text: query,
+          }
+        ],
       },
     ];
-
+    this.anthropic.messages.create({
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 1000,
+      messages,
+      tools: this.tools,
+    }).then((res) => {
+      console.log(7777, res)
+    }).catch((err) => {
+      console.log(8888, err)
+    })
     // Initial Claude API call
     const response = await this.anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
@@ -97,6 +117,7 @@ class MCPClient {
       messages,
       tools: this.tools,
     });
+    console.log(4444, response)
 
     // Process response and handle tool calls
     const finalText = [];
@@ -156,10 +177,13 @@ class MCPClient {
 
       while (true) {
         const message = await rl.question("\nQuery: ");
+        // console.log(3333, this.processQuery)
         if (message.toLowerCase() === "quit") {
+          console.log(555)
           break;
         }
         const response = await this.processQuery(message);
+        console.log(6666)
         console.log("\n" + response);
       }
     } finally {
@@ -180,6 +204,12 @@ async function main() {
     console.log("Usage: node build/index.js <path_to_server_script>");
     return;
   }
+  //  process.argv:
+  // [
+  //   '/Users/yafei/.nvm/versions/node/v21.6.2/bin/node',
+  //   '/Users/yafei/tempt/quickstart-resources/mcp-client-typescript/build/index.js',
+  //   '../weather-server-typescript/build/index.js'
+  // ]
   const mcpClient = new MCPClient();
   try {
     await mcpClient.connectToServer(process.argv[2]);
